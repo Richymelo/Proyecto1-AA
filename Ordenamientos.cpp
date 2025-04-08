@@ -157,10 +157,8 @@ void pancakeSort(int* arr, int n){
     }
 }
 
-// ------------------------------------------------------------
-// Algoritmos añadidos por el otro miembro del grupo:
-// Bubble Sort, Cocktail Sort, Quick Sort, Shell Sort, Gnome Sort
 
+// Bubble Sort, Cocktail Sort, Quick Sort, Shell Sort, Gnome Sort
 void bubbleSort(vector<int>& arr) {
     int n = arr.size();
     bool swapped;

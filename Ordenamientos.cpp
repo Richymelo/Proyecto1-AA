@@ -1,8 +1,166 @@
+// Ordenamiento.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
+
 #include <iostream>
 #include <vector>
 using namespace std;
 
-// Bubble Sort
+// Algoritmos originales:
+
+void exchangeSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (arr[i] > arr[j]) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+}
+
+void selectionSort(vector<int>& arr) {
+    int n = arr.size();
+
+    for (int i = 0; i < n - 1; ++i) {
+        int min_idx = i;
+        for (int j = i + 1; j < n; ++j) {
+            if (arr[j] < arr[min_idx]) {
+                min_idx = j;
+            }
+        }
+        swap(arr[i], arr[min_idx]);
+    }
+}
+
+void selectionSortMax(int arr[], int n) {
+    int i, j, max_idx;
+
+    for (i = n - 1; i > 0; i--) {
+        max_idx = 0;
+
+        for (j = 1; j <= i; j++) {
+            if (arr[j] > arr[max_idx]) {
+                max_idx = j;
+            }
+        }
+
+        int temp = arr[i];
+        arr[i] = arr[max_idx];
+        arr[max_idx] = temp;
+    }
+}
+
+void insertionSort(int arr[], int n) {
+    int i, j, temp;
+
+    for (i = 1; i < n; i++) {
+        temp = arr[i];
+        j = i - 1;
+
+        while (j >= 0 && arr[j] > temp) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+
+        arr[j + 1] = temp;
+    }
+}
+
+void merge(vector<int>& arr, int l, int m, int r) {
+    int i, j, k;
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    vector<int> L(n1), R(n2);
+
+    for (i = 0; i < n1; i++) L[i] = arr[l + i];
+    for (j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+
+    i = 0;
+    j = 0;
+    k = l;
+
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        }
+        else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSort(vector<int>& arr, int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+
+        mergeSort(arr, l, m);
+        mergeSort(arr, m + 1, r);
+
+        merge(arr, l, m, r);
+    }
+}
+
+void flip(int arr[], int i){
+    int temp, start = 0;
+    while (start < i)
+    {
+        temp = arr[start];
+        arr[start] = arr[i];
+        arr[i] = temp;
+        start++;
+        i--;
+    }
+}
+
+// Devuelve el índice del elemento máximo en arr[0..n-1]
+int findMax(int arr[], int n){
+    int mi, i;
+    for (mi = 0, i = 0; i < n; ++i)
+        if (arr[i] > arr[mi])
+            mi = i;
+    return mi;
+}
+
+// Función principal que ordena el arreglo dado usando operaciones de volteo
+void pancakeSort(int* arr, int n){
+    // Comienza con el arreglo completo y reduce el tamaño actual uno por uno
+    for (int curr_size = n; curr_size > 1;--curr_size)
+    {
+        // Encuentra el índice del elemento máximo en arr[0..curr_size-1]
+        int mi = findMax(arr, curr_size);
+
+        // Mueve el elemento máximo al final del arreglo actual si no está ya al final
+        if (mi != curr_size - 1)
+        {
+            // Para moverlo al final, primero lleva el número máximo al inicio
+            flip(arr, mi);
+
+            // Ahora mueve el número máximo al final invirtiendo el arreglo actual
+            flip(arr, curr_size - 1);
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// Algoritmos añadidos por el otro miembro del grupo:
+// Bubble Sort, Cocktail Sort, Quick Sort, Shell Sort, Gnome Sort
+
 void bubbleSort(vector<int>& arr) {
     int n = arr.size();
     bool swapped;
@@ -14,11 +172,11 @@ void bubbleSort(vector<int>& arr) {
                 swapped = true;
             }
         }
-        if (!swapped) break;
+        if (!swapped)
+            break;
     }
 }
 
-// Cocktail Sort
 void cocktailSort(vector<int>& arr) {
     bool swapped = true;
     int start = 0;
@@ -26,6 +184,7 @@ void cocktailSort(vector<int>& arr) {
 
     while (swapped) {
         swapped = false;
+
         for (int i = start; i < end; ++i) {
             if (arr[i] < arr[i + 1]) {
                 swap(arr[i], arr[i + 1]);
@@ -33,7 +192,9 @@ void cocktailSort(vector<int>& arr) {
             }
         }
 
-        if (!swapped) break;
+        if (!swapped)
+            break;
+
         swapped = false;
         --end;
 
@@ -47,7 +208,6 @@ void cocktailSort(vector<int>& arr) {
     }
 }
 
-// Quick Sort
 int partition(vector<int>& arr, int low, int high) {
     int pivot = arr[high];
     int i = low - 1;
@@ -59,7 +219,7 @@ int partition(vector<int>& arr, int low, int high) {
         }
     }
     swap(arr[i + 1], arr[high]);
-    return i + 1;
+    return (i + 1);
 }
 
 void quickSort(vector<int>& arr, int low, int high) {
@@ -70,7 +230,6 @@ void quickSort(vector<int>& arr, int low, int high) {
     }
 }
 
-// Shell Sort
 void shellSort(vector<int>& arr) {
     int n = arr.size();
     for (int gap = n / 2; gap > 0; gap /= 2) {
@@ -85,7 +244,6 @@ void shellSort(vector<int>& arr) {
     }
 }
 
-// Gnome Sort
 void gnomeSort(vector<int>& arr) {
     int index = 0;
     int n = arr.size();
@@ -98,106 +256,6 @@ void gnomeSort(vector<int>& arr) {
         else {
             swap(arr[index], arr[index - 1]);
             index--;
-        }
-    }
-}
-
-// Exchange Sort
-void exchangeSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (arr[i] < arr[j]) {
-                swap(arr[i], arr[j]);
-            }
-        }
-    }
-}
-
-// Selection Sort
-void selectionSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = 0; i < n - 1; ++i) {
-        int max_idx = i;
-        for (int j = i + 1; j < n; ++j) {
-            if (arr[j] > arr[max_idx]) {
-                max_idx = j;
-            }
-        }
-        swap(arr[i], arr[max_idx]);
-    }
-}
-
-// Insertion Sort
-void insertionSort(vector<int>& arr) {
-    int n = arr.size();
-    for (int i = 1; i < n; i++) {
-        int temp = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j] < temp) {
-            arr[j + 1] = arr[j];
-            j--;
-        }
-        arr[j + 1] = temp;
-    }
-}
-
-// Merge Sort
-void merge(vector<int>& arr, int l, int m, int r) {
-    int n1 = m - l + 1;
-    int n2 = r - m;
-    vector<int> L(n1), R(n2);
-
-    for (int i = 0; i < n1; i++) L[i] = arr[l + i];
-    for (int j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
-
-    int i = 0, j = 0, k = l;
-
-    while (i < n1 && j < n2) {
-        if (L[i] >= R[j]) {
-            arr[k++] = L[i++];
-        } else {
-            arr[k++] = R[j++];
-        }
-    }
-
-    while (i < n1) arr[k++] = L[i++];
-    while (j < n2) arr[k++] = R[j++];
-}
-
-void mergeSort(vector<int>& arr, int l, int r) {
-    if (l < r) {
-        int m = l + (r - l) / 2;
-        mergeSort(arr, l, m);
-        mergeSort(arr, m + 1, r);
-        merge(arr, l, m, r);
-    }
-}
-
-// Pancake Sort (con helpers)
-void flip(vector<int>& arr, int i) {
-    int start = 0;
-    while (start < i) {
-        swap(arr[start], arr[i]);
-        start++;
-        i--;
-    }
-}
-
-int findMax(vector<int>& arr, int n) {
-    int mi = 0;
-    for (int i = 1; i < n; ++i)
-        if (arr[i] > arr[mi])
-            mi = i;
-    return mi;
-}
-
-void pancakeSort(vector<int>& arr) {
-    for (int curr_size = arr.size(); curr_size > 1; --curr_size) {
-        int mi = findMax(arr, curr_size);
-        if (mi != curr_size - 1) {
-            flip(arr, mi);
-            flip(arr, curr_size - 1);
         }
     }
 }

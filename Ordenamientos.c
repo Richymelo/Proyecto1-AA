@@ -266,7 +266,7 @@ void invertirLista(int lista[], int tamaño) {
         lista[i] = lista[tamaño - 1 - i];
         lista[tamaño - 1 - i] = temp;
     }
-
+z
 // Bubble Sort, Cocktail Sort, Quick Sort, Shell Sort, Gnome Sort
 
 void bubbleSort(vector<int>& arr) {

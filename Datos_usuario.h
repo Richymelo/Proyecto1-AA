@@ -12,9 +12,11 @@ typedef struct {
     int *copia_datos;
     int N;            // Cantidad de rayos
     int k;            // Cantidad de datos
-    bool usar_copia;
+    bool usar_copia;  // Para saber cual vector de datos utilizar
     GdkRGBA color_1;  // Primer color elegido
     GdkRGBA color_2;  // Segundo color elegido
+    int iterations;   // Contador para iteraciones
+    int swaps;        // Contador para intercambios
 } DatosUsuario;
 // Estructura que guarda los datos del usuario y los del builder
 typedef struct {

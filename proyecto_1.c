@@ -68,6 +68,9 @@ void desplegar_datos_nuevos(GtkButton *button, gpointer user_data) {
     datos->k = k;
     datos->color_1 = color_1;
     datos->color_2 = color_2;
+    // Initialize counters
+    datos->iterations = 0;  // Initialize the iteration counter
+    datos->swaps = 0;       // Initialize the swap counter
     
     // Limpiar memoria si ya había un vector
     if (datos->D != NULL) {
@@ -130,6 +133,9 @@ void desplegar_datos_iniciales(GtkButton *button, gpointer user_data) {
     // Datos del usuario
     datos->color_1 = color_1;
     datos->color_2 = color_2;
+    // Initialize counters
+    datos->iterations = 0;  // Initialize the iteration counter
+    datos->swaps = 0;       // Initialize the swap counter
     
     // Volver a dibujar el círculo, esta vez con los rayos
     GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
@@ -157,7 +163,6 @@ void sort(GtkButton *button, gpointer user_data) {
     GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
 
     desplegar_datos_iniciales(button, user_data);
-
     // Create a copy of the original array
     int k = datos->k;  // Size of the array
     if (datos->copia_datos != NULL) {
@@ -181,7 +186,11 @@ void sort(GtkButton *button, gpointer user_data) {
 
     datos->usar_copia = TRUE;  // Set flag to indicate use of sorted array
     // Sort the copied array
-    bubbleSort(datos->copia_datos, k, area_circulo);
+    bubbleSort(datos->copia_datos, k, user_data);
+    GtkWidget *sort_terminado = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
+        "¡Ha terminado el sort!");
+    gtk_dialog_run(GTK_DIALOG(sort_terminado));
+    gtk_widget_destroy(sort_terminado);
 }
 
 gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
@@ -244,6 +253,26 @@ gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
             cairo_stroke(cr);
         }
     }
+    int width = gtk_widget_get_allocated_width(area);
+    int height = gtk_widget_get_allocated_height(area);
+
+    // Set font and color
+    cairo_set_source_rgb(cr, 0, 0, 0);
+    cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+    cairo_set_font_size(cr, 16);
+
+    // Draw Iteration Counter
+    char iteration_text[50];
+    snprintf(iteration_text, sizeof(iteration_text), "Iteraciones: %d", datos->iterations);
+    cairo_move_to(cr, width - 180, height - 50);  // Adjust 180 to fit your text
+    cairo_show_text(cr, iteration_text);
+
+    // Draw Swap Counter
+    char swap_text[50];
+    snprintf(swap_text, sizeof(swap_text), "Intercambios: %d", datos->swaps);
+    cairo_move_to(cr, width - 180, height - 20);  // Adjust 180 to fit your text
+    cairo_show_text(cr, swap_text);
+
     return FALSE;
 }
 
@@ -281,6 +310,8 @@ int main(int argc, char *argv[]) {
     datos->usar_copia = FALSE;
     datos->color_1 = (GdkRGBA){0, 0, 0, 1};
     datos->color_2 = (GdkRGBA){0, 0, 0, 1};
+    datos->iterations = 0;
+    datos->swaps = 0;
 
     // Se asigna memoria para la estructura de DatosGenerales
     DatosGenerales *general = malloc(sizeof(DatosGenerales));

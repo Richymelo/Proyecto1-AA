@@ -266,4 +266,104 @@ void invertirLista(int lista[], int tamaño) {
         lista[i] = lista[tamaño - 1 - i];
         lista[tamaño - 1 - i] = temp;
     }
+
+// Bubble Sort, Cocktail Sort, Quick Sort, Shell Sort, Gnome Sort
+
+void bubbleSort(vector<int>& arr) {
+    int n = arr.size();
+    bool swapped;
+    for (int i = 0; i < n - 1; i++) {
+        swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] < arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+        if (!swapped)
+            break;
+    }
+}
+
+void cocktailSort(vector<int>& arr) {
+    bool swapped = true;
+    int start = 0;
+    int end = arr.size() - 1;
+
+    while (swapped) {
+        swapped = false;
+
+        for (int i = start; i < end; ++i) {
+            if (arr[i] < arr[i + 1]) {
+                swap(arr[i], arr[i + 1]);
+                swapped = true;
+            }
+        }
+
+        if (!swapped)
+            break;
+
+        swapped = false;
+        --end;
+
+        for (int i = end - 1; i >= start; --i) {
+            if (arr[i] < arr[i + 1]) {
+                swap(arr[i], arr[i + 1]);
+                swapped = true;
+            }
+        }
+        ++start;
+    }
+}
+
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+
+    for (int j = low; j < high; j++) {
+        if (arr[j] > pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[i + 1], arr[high]);
+    return (i + 1);
+}
+
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+void shellSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int gap = n / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < n; i++) {
+            int temp = arr[i];
+            int j;
+            for (j = i; j >= gap && arr[j - gap] < temp; j -= gap) {
+                arr[j] = arr[j - gap];
+            }
+            arr[j] = temp;
+        }
+    }
+}
+
+void gnomeSort(vector<int>& arr) {
+    int index = 0;
+    int n = arr.size();
+
+    while (index < n) {
+        if (index == 0)
+            index++;
+        if (arr[index] <= arr[index - 1])
+            index++;
+        else {
+            swap(arr[index], arr[index - 1]);
+            index--;
+        }
+    }
 }

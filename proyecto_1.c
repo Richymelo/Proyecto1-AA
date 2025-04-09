@@ -10,13 +10,13 @@
                 El resto de funciones barajan los datos del vector D o afectan la visualización
                 de la interfaz.
 */
-
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include <stdbool.h>
 #include <math.h>     // Para calcular los rayos
-#include <stdlib.h>  // Para utilizar rand()
 #include <time.h>    // Para utilizar rand()
 #include "Datos_usuario.h"
+#include "ordenamientos.h"
 
 #define PI 3.14159265358979323846
 
@@ -42,8 +42,8 @@ void barajar_datos(int *datos, int size) {
         datos[j] = temp;
     }
 }
-// Obtener datos
-void desplegar_datos(GtkButton *button, gpointer user_data) {
+// Obtener datos nuevos
+void desplegar_datos_nuevos(GtkButton *button, gpointer user_data) {
     DatosGenerales *general = (DatosGenerales *)user_data;
     GtkBuilder *builder = general->builder;
     DatosUsuario *datos = general->datos;
@@ -82,7 +82,7 @@ void desplegar_datos(GtkButton *button, gpointer user_data) {
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
     return;  // El usuario puede volver a intentar
-}
+    }
     for (int i = 0; i < k; i++) {
         datos->D[i] = i + 1;  // Llenar el vector con datos desde 1 hasta k
     }
@@ -105,10 +105,40 @@ void desplegar_datos(GtkButton *button, gpointer user_data) {
         }
         barajar_datos(datos->D, k);   // Cambiar de orden los valores en el vector
     }
+    datos->usar_copia = FALSE;
     
     // Volver a dibujar el círculo, esta vez con los rayos
     GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
     gtk_widget_queue_draw(area_circulo);
+}
+// Desplegar datos ya creados
+void desplegar_datos_iniciales(GtkButton *button, gpointer user_data) {
+    DatosGenerales *general = (DatosGenerales *)user_data;
+    GtkBuilder *builder = general->builder;
+    DatosUsuario *datos = general->datos;
+
+    // Se guarda el primer color escogido
+    GdkRGBA color_1;
+    GtkWidget *primer_color = GTK_WIDGET(gtk_builder_get_object(builder, "color_1"));
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(primer_color), &color_1);
+    // Se guarda el segundo color escogido
+    GdkRGBA color_2;
+    GtkWidget *segundo_color = GTK_WIDGET(gtk_builder_get_object(builder, "color_2"));
+    gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(segundo_color), &color_2);
+    datos->usar_copia = FALSE;
+
+    // Datos del usuario
+    datos->color_1 = color_1;
+    datos->color_2 = color_2;
+    
+    // Volver a dibujar el círculo, esta vez con los rayos
+    GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
+    gtk_widget_queue_draw(area_circulo);
+    // Allow GTK to process the drawing event and update the display
+    while (gtk_events_pending()) {
+        gtk_main_iteration();  // Process all pending GTK events
+    }
+    g_usleep(500000);  // Delay for half a second to visualize each step
 }
 // Crea la lista de colores que va a corresponder a los rayos
 void colorLinea(int *D, int cElementosV, int color1[3], int color2[3], int colores[][3]) {
@@ -118,7 +148,42 @@ void colorLinea(int *D, int cElementosV, int color1[3], int color2[3], int color
 		}
 	}
 }
-// Mostrar círculo y rayos
+// Ordenar datos
+void sort(GtkButton *button, gpointer user_data) {
+    DatosGenerales *general = (DatosGenerales *)user_data;
+    GtkBuilder *builder = general->builder;
+    DatosUsuario *datos = general->datos;
+
+    GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
+
+    desplegar_datos_iniciales(button, user_data);
+
+    // Create a copy of the original array
+    int k = datos->k;  // Size of the array
+    if (datos->copia_datos != NULL) {
+        free(datos->copia_datos);
+    }
+    // Crear un vector con k espacios en memoria dinámica
+    datos->copia_datos = malloc(sizeof(int) * k);
+    // Si el número ingresado es muy grande
+    if (datos->copia_datos == NULL) {
+    GtkWidget *dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+        "No se puede asignar memoria para esta cantidad de dígitos. Por favor ingrese un valor más pequeño.");
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return;  // El usuario puede volver a intentar
+    }
+
+    // Copy the elements from the original array to the new array
+    for (int i = 0; i < k; i++) {
+        datos->copia_datos[i] = datos->D[i];
+    }
+
+    datos->usar_copia = TRUE;  // Set flag to indicate use of sorted array
+    // Sort the copied array
+    bubbleSort(datos->copia_datos, k, area_circulo);
+}
+
 gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
     DatosUsuario *datos = (DatosUsuario *)user_data;
     // Obtener el centro del área de dibujo
@@ -140,7 +205,7 @@ gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
         // Datos ingresados
         int N = datos->N;     // Cantidad de rayos
         int k = datos->k;     // Cantidad de datos
-        int *D = datos->D;    // Vector con los datos
+        int *D = datos->usar_copia ? datos->copia_datos : datos->D; // Use sorted or original array
         
         // Configurar grosor de las líneas
         cairo_set_line_width(cr, 5);
@@ -159,7 +224,8 @@ gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
         // Arreglo con los colores para todas los rayos
         int colores[datos->k][3];
         // Función que llena el arreglo con colores
-        colorLinea(datos->D, datos->k, color1, color2, colores);
+        colorLinea(D, datos->k, color1, color2, colores);
+        
         // Dibujar los rayos desde el centro
         for (int i = 0; i < k; i++) {
             double angle = (i / (double)N) * 2 * PI;    // Ángulo en radianes
@@ -187,7 +253,9 @@ int main(int argc, char *argv[]) {
     GtkWidget *area_circulo;    // El área donde se dibuja el círculo
     GtkWidget *panel;           // El panel que divide el área de dibujo y el área de interacción
     GtkWidget *boton_salida;    // Botón para terminar el programa
-    GtkWidget *boton_desplegar; // Botón para barajar y mostrar los datos
+    GtkWidget *boton_desplegar_nuevos; // Botón para mostrar datos nuevos
+    GtkWidget *boton_desplegar_iniciales; // Botón para mostrar los datos originales
+    GtkWidget *boton_sort;      // Botón para ordenar los datos
     GtkWidget *cantidad_rayos;  // Espacio para ingresar cantidad de rayos N
     GtkWidget *cantidad_datos;  // Espacio para ingresar la cantidad de datos k
     GtkWidget *color_1;         // Primer color escogido
@@ -207,8 +275,10 @@ int main(int argc, char *argv[]) {
     }
     // Se guardan valores en las variables
     datos->D = NULL;
+    datos->copia_datos = NULL;
     datos->N = 0;
     datos->k = 0;
+    datos->usar_copia = FALSE;
     datos->color_1 = (GdkRGBA){0, 0, 0, 1};
     datos->color_2 = (GdkRGBA){0, 0, 0, 1};
 
@@ -231,9 +301,15 @@ int main(int argc, char *argv[]) {
     // El círculo
     area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
     g_signal_connect(area_circulo, "draw", G_CALLBACK(dibujar_area), datos);
-    // Botón de desplegar los datos del usuario
-    boton_desplegar = GTK_WIDGET(gtk_builder_get_object(builder, "boton_desplegar_original"));
-    g_signal_connect(boton_desplegar, "clicked", G_CALLBACK(desplegar_datos), general);
+    // Botón para desplegar los datos nuevos
+    boton_desplegar_nuevos = GTK_WIDGET(gtk_builder_get_object(builder, "boton_desplegar_nuevos"));
+    g_signal_connect(boton_desplegar_nuevos, "clicked", G_CALLBACK(desplegar_datos_nuevos), general);
+    // Botón para volver a utilizar los datos ya creados
+    boton_desplegar_iniciales = GTK_WIDGET(gtk_builder_get_object(builder, "boton_desplegar_iniciales"));
+    g_signal_connect(boton_desplegar_iniciales, "clicked", G_CALLBACK(desplegar_datos_iniciales), general);
+    // Botón para ordenar los datos del usuario
+    boton_sort = GTK_WIDGET(gtk_builder_get_object(builder, "boton_sort"));
+    g_signal_connect(boton_sort, "clicked", G_CALLBACK(sort), general);
     // El bóton de terminación del programa
     boton_salida = GTK_WIDGET(gtk_builder_get_object(builder, "boton_terminar"));
     g_signal_connect(boton_salida, "clicked", G_CALLBACK(gtk_main_quit), NULL);
@@ -248,6 +324,9 @@ int main(int argc, char *argv[]) {
     // Limpiar la memoria
     if (datos->D != NULL) {
         free(datos->D);
+    }
+    if (datos->copia_datos != NULL) {
+        free(datos->copia_datos);
     }
     free(datos);
     free(general);

@@ -9,8 +9,10 @@
 // Estructura que guarda los datos que ingresa el usuario
 typedef struct {
     int *D;           // Puntero al vector de datos
+    int *copia_datos;
     int N;            // Cantidad de rayos
     int k;            // Cantidad de datos
+    bool usar_copia;
     GdkRGBA color_1;  // Primer color elegido
     GdkRGBA color_2;  // Segundo color elegido
 } DatosUsuario;

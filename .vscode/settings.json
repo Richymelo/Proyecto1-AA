@@ -2,6 +2,7 @@
     "files.associations": {
         "gtk.h": "c",
         "cairo.h": "c",
-        "ordenamientos.h": "c"
+        "ordenamientos.h": "c",
+        "vector": "c"
     }
 }

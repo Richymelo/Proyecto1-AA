@@ -1,20 +1,19 @@
 /*
-                Tarea 0: Rayos Desordenados
-                Hecha por: Carmen Hidalgo Paz, Jorge Guevara Chavarría y Ricardo Castro Jiménez
-                Fecha: Jueves 27 de febrero del 2025
+                Proyecto 1: Ordenando Números
+                Hecho por: Carmen Hidalgo Paz, Jorge Guevara Chavarría y Ricardo Castro Jiménez
+                Fecha: Jueves 10 de abril del 2025
 
                 Esta sección contiene el main, donde se indica lo que tiene que hacer
                 cada objeto mostrado en la interfaz. Además, hay una función que muestra los
                 rayos y el círculo editado con los valores que ingresa el usuario.
-                Estas ediciones del usuario son guardadas en otra función llamada desplegar_datos.
-                El resto de funciones barajan los datos del vector D o afectan la visualización
-                de la interfaz.
+                Después se ordenan los rayos con el algoritmo de ordenamiento escogido
+                por el usuario.
 */
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include <stdbool.h>
 #include <math.h>     // Para calcular los rayos
-#include <time.h>    // Para utilizar rand()
+#include <time.h>     // Para utilizar rand()
 #include "Datos_usuario.h"
 #include "ordenamientos.h"
 
@@ -68,9 +67,8 @@ void desplegar_datos_nuevos(GtkButton *button, gpointer user_data) {
     datos->k = k;
     datos->color_1 = color_1;
     datos->color_2 = color_2;
-    // Initialize counters
-    datos->iterations = 0;  // Initialize the iteration counter
-    datos->swaps = 0;       // Initialize the swap counter
+    datos->iterations = 0;
+    datos->swaps = 0;
     
     // Limpiar memoria si ya había un vector
     if (datos->D != NULL) {
@@ -89,6 +87,7 @@ void desplegar_datos_nuevos(GtkButton *button, gpointer user_data) {
     for (int i = 0; i < k; i++) {
         datos->D[i] = i + 1;  // Llenar el vector con datos desde 1 hasta k
     }
+    // Dependiendo del orden escogido, así se llenan los datos
     GtkWidget *radio_ascendente = GTK_WIDGET(gtk_builder_get_object(builder, "orden_ascendente"));
     GtkWidget *radio_descendente = GTK_WIDGET(gtk_builder_get_object(builder, "orden_descendente"));
     GtkWidget *radio_aleatorio = GTK_WIDGET(gtk_builder_get_object(builder, "orden_aleatorio"));
@@ -99,7 +98,7 @@ void desplegar_datos_nuevos(GtkButton *button, gpointer user_data) {
     }
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_descendente))) {
         for (int i = 0; i < k; i++) {
-            datos->D[i] = k - i;  // Llenar el vector con datos desde 1 hasta k
+            datos->D[i] = k - i;  // Llenar el vector con datos desde k hasta 1
         }
     }
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_aleatorio))) {
@@ -133,18 +132,17 @@ void desplegar_datos_iniciales(GtkButton *button, gpointer user_data) {
     // Datos del usuario
     datos->color_1 = color_1;
     datos->color_2 = color_2;
-    // Initialize counters
-    datos->iterations = 0;  // Initialize the iteration counter
-    datos->swaps = 0;       // Initialize the swap counter
+    datos->iterations = 0;
+    datos->swaps = 0;
     
     // Volver a dibujar el círculo, esta vez con los rayos
     GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
     gtk_widget_queue_draw(area_circulo);
-    // Allow GTK to process the drawing event and update the display
+    // Esperar a que GTK procese lo que ocupa
     while (gtk_events_pending()) {
-        gtk_main_iteration();  // Process all pending GTK events
+        gtk_main_iteration();
     }
-    g_usleep(500000);  // Delay for half a second to visualize each step
+    g_usleep(500000);  // Un delay para verlo bien
 }
 // Crea la lista de colores que va a corresponder a los rayos
 void colorLinea(int *D, int cElementosV, int color1[3], int color2[3], int colores[][3]) {
@@ -161,38 +159,72 @@ void sort(GtkButton *button, gpointer user_data) {
     DatosUsuario *datos = general->datos;
 
     GtkWidget *area_circulo = GTK_WIDGET(gtk_builder_get_object(builder, "area_circulo"));
+    GtkWidget *algos_ordenamiento = GTK_WIDGET(gtk_builder_get_object(builder, "lista_algos")); // Get the combo box widget
+
+    // Combo box con los algoritmos de ordenamiento
+    const char *algo_seleccionado = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(algos_ordenamiento));
 
     desplegar_datos_iniciales(button, user_data);
-    // Create a copy of the original array
-    int k = datos->k;  // Size of the array
+    
+    // Crear copia del arreglo original
+    int k = datos->k;
+    // Si copia_datos ya existe, liberar esa memoria
     if (datos->copia_datos != NULL) {
         free(datos->copia_datos);
     }
+
     // Crear un vector con k espacios en memoria dinámica
     datos->copia_datos = malloc(sizeof(int) * k);
+    
     // Si el número ingresado es muy grande
     if (datos->copia_datos == NULL) {
-    GtkWidget *dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-        "No se puede asignar memoria para esta cantidad de dígitos. Por favor ingrese un valor más pequeño.");
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
-    return;  // El usuario puede volver a intentar
+        GtkWidget *dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+            "No se puede asignar memoria para esta cantidad de dígitos. Por favor ingrese un valor más pequeño.");
+        gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+        return;  // El usuario puede volver a intentar
     }
 
-    // Copy the elements from the original array to the new array
+    // Copiar elementos del arreglo inicial en el arreglo de copia
     for (int i = 0; i < k; i++) {
         datos->copia_datos[i] = datos->D[i];
     }
+    // Se prende la bandera para que se utilize el arreglo de copia
+    datos->usar_copia = TRUE;
 
-    datos->usar_copia = TRUE;  // Set flag to indicate use of sorted array
-    // Sort the copied array
-    bubbleSort(datos->copia_datos, k, user_data);
+    // Escoger el algoritmo seleccionado por el usuario
+    if (strcmp(algo_seleccionado, "Bubble Sort") == 0) {
+        bubbleSort(datos->copia_datos, k, user_data);   // El Bubble Sort
+    } else if (strcmp(algo_seleccionado, "Cocktail Sort") == 0) {
+        cocktailSort(datos->copia_datos, k, user_data);  // El Cocktail Sort
+    } else if (strcmp(algo_seleccionado, "Exchange Sort") == 0) {
+        exchangeSort(datos->copia_datos, k, user_data);  // El Exchange Sort
+    } else if (strcmp(algo_seleccionado, "Selection Sort") == 0) {
+        selectionSort(datos->copia_datos, k, user_data);  // El Selection Sort
+    } else if (strcmp(algo_seleccionado, "Insertion Sort") == 0) {
+        insertionSort(datos->copia_datos, k, user_data);  // El Insertion Sort
+    } else if (strcmp(algo_seleccionado, "Merge Sort") == 0) {
+        mergeSort(datos->copia_datos, k, user_data);  // El Merge Sort
+    } else if (strcmp(algo_seleccionado, "Quick Sort") == 0) {
+        quickSort(datos->copia_datos, user_data, 0, k-1);  // El Quick Sort
+    } else if (strcmp(algo_seleccionado, "Shell Sort") == 0) {
+        shellSort(datos->copia_datos, k, user_data);  // El Shell Sort
+    } else if (strcmp(algo_seleccionado, "Gnome Sort") == 0) {
+        gnomeSort(datos->copia_datos, k, user_data);  // El Gnome Sort
+    } else if (strcmp(algo_seleccionado, "Pancake Sort") == 0) {
+        pancakeSort(datos->copia_datos, k, user_data);  // El Pancake Sort
+    }
+
+    // Mostrar mensaje cuando terminó el sort
     GtkWidget *sort_terminado = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
         "¡Ha terminado el sort!");
     gtk_dialog_run(GTK_DIALOG(sort_terminado));
     gtk_widget_destroy(sort_terminado);
-}
 
+    // Liberar memoria del string del combo box
+    g_free((gpointer)algo_seleccionado);
+}
+// Área de dibujo
 gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
     DatosUsuario *datos = (DatosUsuario *)user_data;
     // Obtener el centro del área de dibujo
@@ -256,18 +288,18 @@ gboolean dibujar_area(GtkWidget *area, cairo_t *cr, gpointer user_data) {
     int width = gtk_widget_get_allocated_width(area);
     int height = gtk_widget_get_allocated_height(area);
 
-    // Set font and color
+    // Color y tipo de letra
     cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_select_font_face(cr, "Arial", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
     cairo_set_font_size(cr, 16);
 
-    // Draw Iteration Counter
+    // Dibujar contador de iteración
     char iteration_text[50];
     snprintf(iteration_text, sizeof(iteration_text), "Iteraciones: %d", datos->iterations);
     cairo_move_to(cr, width - 180, height - 50);  // Adjust 180 to fit your text
     cairo_show_text(cr, iteration_text);
 
-    // Draw Swap Counter
+    // Dibujar contador de intercambios
     char swap_text[50];
     snprintf(swap_text, sizeof(swap_text), "Intercambios: %d", datos->swaps);
     cairo_move_to(cr, width - 180, height - 20);  // Adjust 180 to fit your text

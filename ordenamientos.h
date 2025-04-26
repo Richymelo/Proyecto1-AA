@@ -27,7 +27,7 @@ void actualizar_area(){
     while (gtk_events_pending()) {
         gtk_main_iteration();  // Procesar los eventos de GTK
     }
-    g_usleep(400000);   // Delay para ver cambios
+    //g_usleep(400000);   // Delay para ver cambios
 }
 // - - - - -
 // BUBBLE SORT
